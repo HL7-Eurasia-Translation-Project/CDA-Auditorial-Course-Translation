@@ -1,9 +1,27 @@
-http://wiki.hl7.org/index.php?title=Software_Implementation_of_CDA
-
+http://wiki.hl7.org/index.php?title=Software_Implementation_of_CDA (версия от 26-го июня 2015 года).
+ 
+Программная реализация CDA
 Software Implementation of CDA
-This whitepaper is one of a series of whitepapers created by the AID Work Group. The whitepaper is based on actual CDA implementation experiences and aims to document a best practice or an implementation pattern.
-The contents of this whitepaper (this particular version) were approved by the AID WG on 2015-05-11 as a reflection of current best practice. The white paper will be up for approval again in May 2016. This is a "living" document, it may be updated by any person at any point in time.
+
+Данный документ входит в набор технической документации, составленный AID Work Group. 
+This whitepaper is one of a series of whitepapers created by the AID Work Group. 
+
+Документ основывается на реальном опыте реализации стандарта CDA и создавался с целью документирования передового опыта (лучших практик) или паттернов реализации.
+The whitepaper is based on actual CDA implementation experiences and aims to document a best practice or an implementation pattern.
+
+Содержимое настоящего документа (его данной версии) была утверждена AID WG 2015-05-11 и отражает лучшие на настоящий момент паттерны реализации стандарта.
+The contents of this whitepaper (this particular version) were approved by the AID WG on 2015-05-11 as a reflection of current best practice. 
+
+Повторное утверждение документа пройдет в мае 2016 года. 
+The white paper will be up for approval again in May 2016. 
+
+Настоящий документ не является конечным, возможно его обновление и изменение в любой момент времени.
+This is a "living" document, it may be updated by any person at any point in time.
+
 Short URL: http://j.mp/gDwZKm - See also: CDA Implementation Tools
+
+- - - -
+
 
 Summary
 
