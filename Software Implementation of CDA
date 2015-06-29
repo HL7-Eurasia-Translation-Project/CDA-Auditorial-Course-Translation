@@ -22,29 +22,213 @@ Short URL: http://j.mp/gDwZKm - See also: CDA Implementation Tools
 
 - - - -
 
-
+Краткое описание
 Summary
 
-This paper addresses the creation of a software application that has to support the CDA R2 model. It discusses the application architecture, and discusses various approaches with regards to code generation and persistence.
-Although it is tempting to use XML techniques to support the creation, validation and parsing of CDA documents this paper shows that this approach is associated with a high risk of non conformant CDA instances. A model driven class code generator should be used if one wants to ensure compliance with the CDA standard as well as the appropriate implementation guide and associated templates.
-Note: this paper assumes the application has to support one HL7 version 3 model (CDA) only. There are drawbacks to locking down an application to a specific SIM (a.k.a. R-MIM). The use-case whereby one needs to support multiple version 3 SIMs is covered in these discussion pages: Schema based code generation and MIF based code generation.
+В настоящей статье поднимается вопрос разработки программного обеспечения, поддерживающего модель CDA R2.
+This paper addresses the creation of a software application that has to support the CDA R2 model. 
+
+В ней обсуждается архитектура приложений, различные подходы к генерации кода и обеспечению хранимости документов (persistence).
+It discusses the application architecture, and discusses various approaches with regards to code generation and persistence.
+
+Несмотря на соблазн использования XML-подхода к созданию, валидации и грамматическому разбору CDA-документов, настоящий
+документ демонстрирует несостоятельность данного подхода, связанную с высоким риском создания экземпляров документов, 
+несовместимых CDA.
+Although it is tempting to use XML techniques to support the creation, validation and parsing of CDA documents this paper shows
+that this approach is associated with a high risk of non conformant CDA instances. 
+
+Для обеспечения совместимости со стандартом CDA необходимо использовать генератор кода классов (class code generator),
+основанный на модели CDA R2, а также соответствующие руководства по реализации и подходящие шаблоны.
+A model driven class code generator should be used if one wants to ensure compliance with the CDA standard as well as 
+the appropriate implementation guide and associated templates.
+
+Обратите внимание: данный документ предполагает, что (разрабатываемое) приложение должно поддерживать только одну модель HL7 
+v3.
+Note: this paper assumes the application has to support one HL7 version 3 model (CDA) only. 
+
+Существует нежелательная вероятность "залочивания" приложения на определенной модели (или R-MIM - уточненной модели).
+There are drawbacks to locking down an application to a specific SIM (a.k.a. R-MIM). 
+
+The use-case whereby one needs to support multiple version 3 SIMs is covered in these discussion pages: 
+Schema based code generation and MIF based code generation.
+
+
+Введение
 Introduction
 
-The HL7 e-Document standard (Clinical Document Architecture or CDA) is part of the HL7 version 3 standard. The current release of that standard (Release 2) was published in 2005. CDA documents are used in a large number of projects, quite often in combination with HL7 version 3 messages or services. This article covers the development of software applications that have to support the CDA standard. The primary audience consists of application architects and software developers.
+Стандарт электронного документа HL7 (Архитектуры клинических документов или CDA) является частью стандарта HL7 третьей версии.
+The HL7 e-Document standard (Clinical Document Architecture or CDA) is part of the HL7 version 3 standard. 
+
+Текущий релиз стандарта (второй релиз) был опубликован в 2005 году.
+The current release of that standard (Release 2) was published in 2005. 
+
+CDA-документы используются в большом кол-ве проектов, часто совместно с обменом сообщениями и сервисами, основанными на 
+стандарте HL7 v3.
+CDA documents are used in a large number of projects, quite often in combination with HL7 version 3 messages or services. 
+
+This article covers the development of software applications that have to support the CDA standard.
+В настоящей статье поднимается вопрос разработки программного обеспечения, поддерживающего стандарт CDA.
+
+Основная целевая группа настоящего документа - архитекторы приложений и разработчики ПО.
+The primary audience consists of application architects and software developers.
+
+Реализация стандарта CDA и валидация экземпляров XML-документов, соответствующих стандарту CDA, основывается на двух
+типах спецификаций: модели классов CDA и уточнениях базовой информационной модели HL7 (HL7 RIM).
 The implementation of the CDA standard and the validation of CDA-conform XML instances is based on two types of specifications:
-The CDA class model, a refinement of the HL7 Reference Information Model (RIM). The class model is expressed in MIF (Model Interchange Format), the meta model format used by HL7 for all version 3 artefacts, or in derivations thereof such as UML or XML Schema. The CDA class model references HL7 version 3 data types and coding systems.
-Context-specific constraints (Templates) of the generic CDA model, as defined in a CDA implementation guide for specific document type and one specific context (e.g. country or project). Templates could express constraints on the class model itself, on the use of data types, on the values defined by coding systems, or they could be expressions of business rules. An example of the latter category is a template which defines that the 'creation date' of “Natal report” documents SHALL be no more than 7 days after the birth of the child.
-At this point in time Templates are defined either in
-textual form as part of a CDA implementation guide; these can be (manually) transformed into software processable specifications such as OCL or Schematron. Many implementation guides are being published jointly with Schematron-based versions of the templates.
-electronic form as supported by template design tools. The underlying electronic format is (as of yet) proprietary in the case of Lantana’s Trifolia (http://www.lantanagroup.com/newsroom/press-releases/trifolia-workbench-hl7-web-edition/), or is based on the HL7 Templates DSTU (HL7 Templates Standard: Specification and Use of Reusable Information Constraint Templates, Release 1) in the case of ART-DECOR (http://www.art-decor.org).
-Recently (2014) HL7 has published a standard for the expression of template definitions (the DSTU HL7 Templates Standard). This format is in the process of being adopted by Template Editors, Template Repositories, as well as Schematron and code generation tools. The ART-DECOR tool already incorporated the DSTU, can create, edit and manage templates, generate schematrons out of the definitions, validate instances and acts both as a registry and a repository for templates and accompanying value sets. ART-DECOR also acts as a reference tools for the Templates DSTU.
-The management aspect of templates is a major issue: a single CDA implementation guide may define hundreds of templates – which are quite often defined in terms of templates defined in other (more generic) CDA implementation guides. This issue is also illustrated by the creation of a US-Realm Consolidated CDA implementation guide (a.k.a. CCDA) - the number of templates (e.g. as defined by IHE, HL7, and HITSP) and the incompatibilities between them made it necessary to consolidate a number of template definitions.
+The CDA class model, a refinement of the HL7 Reference Information Model (RIM). 
+
+Модель классов выражена в формате обмена моделями (MIF - Model Interchange Format), формате мета-модели, используемом HL7 для
+всех артефактов версии 3 или всех их проихводных, таких как UML или XML Schema.
+The class model is expressed in MIF (Model Interchange Format), the meta model format used by HL7 for all version 3 artefacts,
+or in derivations thereof such as UML or XML Schema. 
+
+Модель классов CDA ссылается на типы данных и системы кодирования HL7 v3.
+The CDA class model references HL7 version 3 data types and coding systems.
+
+Контекстно-специфические ограничения (шаблоны) общей модели CDA, определяются в руководстве по реализации CDA для конкретных
+типов документов и конкретного контекста (например, страны или проекта).
+Context-specific constraints (Templates) of the generic CDA model, as defined in a CDA implementation guide for specific 
+document type and one specific context (e.g. country or project). 
+
+Шаблоны могут выражать ограничения, накладываемые на саму модель классов, на использование типов данных, на значения, 
+определенные системами кодирования, или они также могут являться выражением определенных бизнес-правил.
+Templates could express constraints on the class model itself, on the use of data types, on the values defined by 
+coding systems, or they could be expressions of business rules. 
+
+Примером последней категории являются (т.е. выражающих конкретные бизнес-правила) шаблоны, которые определяют, что "дата 
+создания" отчета о родах (natal report) не должна отличаться от даты фактического рождения ребенка более чем на 7 дней.
+An example of the latter category is a template which defines that the 'creation date' of “Natal report” documents SHALL be
+no more than 7 days after the birth of the child.
+
+На данный момент шаблоны могут определяться в форме текстового описания будучи частью руководства по реализации CDA;
+они могут впоследствии (вручную) переведены в программно-обрабатываемые спецификации, такие как OCL или Schematron. 
+At this point in time Templates are defined either in textual form as part of a CDA implementation guide; 
+these can be (manually) transformed into software processable specifications such as OCL or Schematron. 
+
+Многие руководства по реализации публикуются совместно с Schematron-версиями шаблонов.
+Many implementation guides are being published jointly with Schematron-based versions of the templates.
+
+Шаблоны также могут быть представлены в электронной форме, поддерживаемой инструментами разрабтки шаьблонов (template design
+tools).
+electronic form as supported by template design tools. 
+
+Подлежащий электронный формат является (на настоящий момент) проприетарным в случае с Lantana’s Trifolia 
+(http://www.lantanagroup.com/newsroom/press-releases/trifolia-workbench-hl7-web-edition/) или основывается на DSTU шаблонах 
+HL7 (Стандарт шаблонов HL7: спецификация и использование повторно используемых шаблонов, ограничивающих наборы данных, релиз 1)
+в отношении ART-DECOR (http://www.art-decor.org). 
+The underlying electronic format is (as of yet) proprietary in the case of Lantana’s Trifolia 
+(http://www.lantanagroup.com/newsroom/press-releases/trifolia-workbench-hl7-web-edition/), or is based on the HL7 Templates 
+DSTU (HL7 Templates Standard: Specification and Use of Reusable Information Constraint Templates, Release 1) in the case of 
+ART-DECOR (http://www.art-decor.org).
+
+Недавно (2014) HL7 опубликовала стандарт представления определений шаблонов (DSTU-стандарт шаблонов HL7).
+Recently (2014) HL7 has published a standard for the expression of template definitions (the DSTU HL7 Templates Standard). 
+
+Данный формат находится в процессе принятия редакторами шаблонов, репозиториями шаблонов, также как инструментами работы с 
+Schematron'ами и средствами генерации кода.
+This format is in the process of being adopted by Template Editors, Template Repositories, as well as Schematron and code 
+generation tools. 
+
+Инструмент ART-DECOR уже встроен в DSTU, может создавать, редактировать и управлять шаблонами, генерировать schematron'ы на
+основании определений шаблонов, валидировать экземпляры документов; кроме того инструмент ART-DECOR такеж выступает в роли
+реестра и репозитория шаблонов и соответствующих наборов значений.
+The ART-DECOR tool already incorporated the DSTU, can create, edit and manage templates, generate schematrons out of the 
+definitions, validate instances and acts both as a registry and a repository for templates and accompanying value sets. 
+
+ART-DECOR также выступает в роли эталонного средства  для стандарта шаблонов DSTU.
+ART-DECOR also acts as a reference tools for the Templates DSTU.
+
+Аспект управления шаблонами является важнейшим вопросом: единственное руководство по реализации CDA может определять сотни
+шаблонов - которые довольно часто определяются как шалоны в других (более общих) руководствах по реализации CDA.
+The management aspect of templates is a major issue: a single CDA implementation guide may define hundreds of templates – 
+which are quite often defined in terms of templates defined in other (more generic) CDA implementation guides. 
+
+Данный вопрос также продемонстрирован созданием всеамериканского консолидированного руководства по реализации CDA (или CCDA)
+- число шаблонов (например, определенных IHE, HL7 и HITSP) и несовместимостей между ними повлияло на необходимость 
+консолидации ряда определений шаблонов.
+This issue is also illustrated by the creation of a US-Realm Consolidated CDA implementation guide (a.k.a. CCDA) - 
+the number of templates (e.g. as defined by IHE, HL7, and HITSP) and the incompatibilities between them made it necessary 
+to consolidate a number of template definitions.
+
+MIF и XML-схема
 MIF and XML schema
-A HL7 MIF definition of the CDA class model is provided with the HL7 v3 standard. The CDA MIF file can be transformed into less "rich" expressions such as UML and XML schema. Parts of the requirements as expressed by the MIF are lost during the transformation process.
-CDA instances are based on XML and the standard requires that all CDA instances validate (at a minimum) against a published CDA XML schema. This is the main reason why a lot of CDA implementations are based on the CDA XML schema. The wide availability of XML tools is a definite advantage; there are disadvantages as well. The XML schema language is not rich enough by far to express all of the requirements as present in the original CDA class model. A CDA document instance that validates against the XML schema is not guaranteed to be a valid CDA instance - to be a valid CDA instance one has to create XML that conforms to the requirements that are expressed in the CDA class model.
-Examples of the limited capabilities of the XML schema language to express the model requirements include the use of conditional XML attributes with a HL7 v3 data type: a CD data type should either use both the attributes {@code and @codeSystem}, or the attribute @nullFlavor. This requirement simply can't be expressed in XML schema. This has the consequence that a CDA instance that only contains @code will be considered to be a valid document instance if validated against the CDA XML schema. Another example is the use of empty XML elements (<element/>), these are not allowed in any HL7 version 3 instance (see Footnote 1). This can't be specified in XML schema. There are complex workarounds for some of the above limitations of the XML schema language; these however lead to large and unwieldy schema definitions.
-Note: (September 2012) XML Schema 1.1, a yet to be finalized W3C specification does support many of the desired features. It has yet to be determined whether or not most XML tools support version 1.1 - that would be a prerequisite for HL7 to start generating XML Schema 1.1.
-Nictiz, the Dutch NHIN provider which specifies HL7 v3 artefacts for use in the Netherlands, has resorted to publishing a large set of Schematron files (mainly for data types and coding systems) to deal with the 'incomplete' validation as supported by XML schema. The limitations of XML schema are also illustrated by the "Common issues found in implementations of the HL7 Clinical Document Architecture (CDA)" paper (http://www.ringholm.de/docs/03020_en_HL7_CDA_common_issues_error.htm) written in 2008, and the "Model-based Analysis of HL7 CDA R2 Conformance and Requirements Coverage" paper (http://www.ejbi.org/img/ejbi/2015/2/Boufahja_en.pdf) written by IHE in 2015.
+
+HL7 MIF-определение модели классов CDA предоставляется в стандарте HL7 v3.
+A HL7 MIF definition of the CDA class model is provided with the HL7 v3 standard. 
+
+CDA MIF-файл может трансформироваться в менее "насыщенные" выражения, такие какие как UML или XML-схемы.
+The CDA MIF file can be transformed into less "rich" expressions such as UML and XML schema. 
+
+Части требований, выраженные с помощью MIF, теряются в процессе трансформации.
+Parts of the requirements as expressed by the MIF are lost during the transformation process.
+
+CDA instances are based on XML and the standard requires that all CDA instances validate (at a minimum) against a published 
+CDA XML schema. 
+Экземпляры CDA основываются на XML и стандарт требует, чтобы все CDA-документы проходили валидацию (как минимум) по 
+опубликованной CDA XML-схеме.
+
+Это главная причина, почему множество CDA-реализаций основаны на CDA XML-схеме.
+This is the main reason why a lot of CDA implementations are based on the CDA XML schema. 
+
+Широкая доступность XML-инструментов является определенным преимуществом; однако, есть также и недостатки.
+The wide availability of XML tools is a definite advantage; there are disadvantages as well. 
+
+Язык XML Schema недостаточно насыщен (rich) для выржаения всех требований, присутствующих в оригинальной модели классов CDA.
+The XML schema language is not rich enough by far to express all of the requirements as present in the original CDA 
+class model. 
+
+Экземпляр CDA-документа, который проходит валидацию по XML-схеме, не обязательно является валидным CDA-документом -
+чтобы быть валидным CDA-документом необходимо создать XML-документ, которые отвечает всем требованиям, выраженным в модели 
+классов CDA.
+A CDA document instance that validates against the XML schema is not guaranteed to be a valid CDA instance - 
+to be a valid CDA instance one has to create XML that conforms to the requirements that are expressed in the CDA class model.
+
+Примеры ограниченных возможностей языка XML Schema выражать требования модели включают использование условных XML-атрибутов 
+с типом данных HL7 v3: тип данных CD должен использовать оба атрибута {@code и @codeSystem} или атрибут @nullFlavor.
+Examples of the limited capabilities of the XML schema language to express the model requirements include the use of 
+conditional XML attributes with a HL7 v3 data type: a CD data type should either use both the attributes 
+{@code and @codeSystem}, or the attribute @nullFlavor.
+
+Данное требование просто невозможно выразить с помощью XML Schema.
+This requirement simply can't be expressed in XML schema. 
+
+Последствием является то, что экземпляр CDA-документа, который только содержит @code будет считаться валидным документом, при
+валидации по CDA XML-схеме.
+This has the consequence that a CDA instance that only contains @code will be considered to be a valid document instance 
+if validated against the CDA XML schema. 
+
+Другой пример - использование пустых XML-элементов (<element/>); использование пустых элементов неразрешается ни в каких
+HL7 v3-документах (см. сноску 1).
+Another example is the use of empty XML elements (<element/>), these are not allowed in any HL7 version 3 instance 
+(see Footnote 1).
+
+Это ограничение также нельзя описать с помощью XML Schema.
+This can't be specified in XML schema. 
+
+Существуют обходные решения для некоторых из вышеописанных ограничений языка XML Schema; однако, они значительно увеличивают
+определения шаблонов с помощью языка XML Schema.
+There are complex workarounds for some of the above limitations of the XML schema language; these however lead to large 
+and unwieldy schema definitions.
+
+Обратите внимание: (сент. 2012) XML Schema 1.1, все еще не является финализированной специцификацией W3C и не поддерживает
+многие из желаемых возможностей.
+Note: (September 2012) XML Schema 1.1, a yet to be finalized W3C specification does support many of the desired features. 
+
+Только планируется определить, будет ли большинство средств для работы с XML поддерживать версию 1.1 - это станет обязательным
+требованием для HL7 начать генерацию XML Schema 1.1
+It has yet to be determined whether or not most XML tools support version 1.1 - that would be a prerequisite for HL7 to start 
+generating XML Schema 1.1.
+
+Nictiz (голландаская организация-поставщик национальной сети медицинской информации, представленной в электронной форме),
+предоставляет спецификации HL7 v3-артефактов, используемых в Нидерландах, опубликовала большой набор файлов в формате 
+Schematron (в основном для типов данных и систем кодирования) для разрешения проблемы "неполной" валидации, поддерживаемой
+XML-схемой.
+Nictiz, the Dutch NHIN provider which specifies HL7 v3 artefacts for use in the Netherlands, has resorted to publishing a 
+large set of Schematron files (mainly for data types and coding systems) to deal with the 'incomplete' validation as supported
+by XML schema. 
+
+
+The limitations of XML schema are also illustrated by the "Common issues found in implementations of the HL7 Clinical Document Architecture (CDA)" paper (http://www.ringholm.de/docs/03020_en_HL7_CDA_common_issues_error.htm) written in 2008, and the "Model-based Analysis of HL7 CDA R2 Conformance and Requirements Coverage" paper (http://www.ejbi.org/img/ejbi/2015/2/Boufahja_en.pdf) written by IHE in 2015.
 In order to fulfill all requirements as expressed by the CDA class model the starting point for all CDA implementations would have to be the CDA MIF. MIF however has the disadvantage that it is a HL7 specific format which is only supported by a limited number of tools.
 Software development approaches
 
